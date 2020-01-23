@@ -1,6 +1,6 @@
-namespace AzDevOpsWiReader
+namespace AzDevOpsWiReader.Shared
 {
-    public class OrgsWithPATConfig
+    public class Config
     {
         public OrgsWithPAT[] OrgsWithPATs { get; set; }
         public string Query { get; set; }
