@@ -5,10 +5,11 @@ using System.Data;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using AzDevOpsWiReader.Shared;
 using ClosedXML.Excel;
 using Microsoft.Extensions.Configuration;
 
-namespace AzDevOpsWiReader
+namespace AzDevOpsWiReader.Cli
 {
     class Program
     {
@@ -16,46 +17,22 @@ namespace AzDevOpsWiReader
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("orgs.json", optional: false, reloadOnChange: true);
+                .AddJsonFile("config.json", optional: false, reloadOnChange: true);
             var config = builder.Build();
-            var c = config.Get<OrgsWithPATConfig>();
-            var fieldList = new List<string>(c.Fields);
-            if (!fieldList.Contains("System.Title"))
-            {
-                fieldList.Add("System.Title");
-            }
+            var c = config.Get<Config>();
 
-            var tasks = new List<Task<ConcurrentDictionary<long, Dictionary<string, string>>>>();
-            foreach (var orgWithPAT in c.OrgsWithPATs)
-            {
-                foreach (var org in orgWithPAT.Orgs)
-                {
-                    var or = new OrgReader(org, orgWithPAT.Pat, c.Query, fieldList, c.LinkType);
-                    tasks.Add(or.ReadWIs());
-                }
-            }
-
-            ConcurrentDictionary<long, Dictionary<string, string>>[] results = Task.WhenAll(tasks).Result;
-
-
-            if (fieldList.Contains("System.AssignedTo"))
-            {
-                fieldList.Remove("System.AssignedTo");
-                fieldList.Add("System.AssignedTo.DisplayName");
-                fieldList.Add("System.AssignedTo.UniqueName");
-            }
-            fieldList.Add("ParentTitle");
+            var azDevOpsResults = AzDevOpsReader.ReadWIs(c);
 
             var wb = new XLWorkbook();
             var ws = wb.Worksheets.Add("Workitems");
             DataTable table = new DataTable();
             table.Columns.Add("ID");
-            foreach (var field in fieldList)
+            foreach (var field in azDevOpsResults.FieldList)
             {
                 table.Columns.Add(field, typeof(string));
             }
 
-            foreach (var wiDict in results)
+            foreach (var wiDict in azDevOpsResults.WIs)
             {
                 foreach (var wiKVP in wiDict)
                 {
@@ -67,7 +44,7 @@ namespace AzDevOpsWiReader
                     }
                     else
                     {
-                        foreach (var field in fieldList)
+                        foreach (var field in azDevOpsResults.FieldList)
                         {
                             row[field] = wiKVP.Value.ContainsKey(field) ? wiKVP.Value[field] : "";
                             if (field == "System.Title")

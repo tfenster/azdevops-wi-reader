@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"name": "Shared lib",
+			"path": "shared"
+		},
+		{
+			"name": "Console CLI app",
+			"path": "cli"
+		},
+		{
+			"name": "Web App",
+			"path": "web"
+		}
+	],
+	"settings": {
+		"editor.formatOnSave": true
+	}
+}
