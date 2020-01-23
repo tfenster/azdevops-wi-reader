@@ -16,7 +16,7 @@ namespace AzDevOpsWiReader
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("orgs.json");
+                .AddJsonFile("orgs.json", optional: false, reloadOnChange: true);
             var config = builder.Build();
             var c = config.Get<OrgsWithPATConfig>();
             var fieldList = new List<string>(c.Fields);
