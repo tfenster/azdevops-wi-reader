@@ -21,51 +21,10 @@ namespace AzDevOpsWiReader.Cli
             var config = builder.Build();
             var c = config.Get<Config>();
 
-            var azDevOpsResults = AzDevOpsReader.ReadWIs(c);
+            var table = AzDevOpsReader.ReadWIs(c);
 
             var wb = new XLWorkbook();
             var ws = wb.Worksheets.Add("Workitems");
-            DataTable table = new DataTable();
-            table.Columns.Add("ID");
-            foreach (var field in azDevOpsResults.FieldList)
-            {
-                table.Columns.Add(field, typeof(string));
-            }
-
-            foreach (var wiDict in azDevOpsResults.WIs)
-            {
-                foreach (var wiKVP in wiDict)
-                {
-                    var row = table.NewRow();
-                    row["ID"] = wiKVP.Key;
-                    if (wiKVP.Value == null)
-                    {
-                        Console.WriteLine($"Details for Workitem {wiKVP.Key} are missing");
-                    }
-                    else
-                    {
-                        foreach (var field in azDevOpsResults.FieldList)
-                        {
-                            row[field] = wiKVP.Value.ContainsKey(field) ? wiKVP.Value[field] : "";
-                            if (field == "System.Title")
-                            {
-                                if (wiKVP.Value.ContainsKey("URL"))
-                                    row[field] = wiKVP.Value.ContainsKey(field) ? $"=HYPERLINK({wiKVP.Value["URL"]};{wiKVP.Value[field]})" : "";
-                                else
-                                    row[field] = wiKVP.Value.ContainsKey(field) ? $"{wiKVP.Value[field]}" : "";
-                            }
-                            else if (field == "ParentTitle")
-                            {
-                                if (wiKVP.Value.ContainsKey("ParentURL"))
-                                    row[field] = wiKVP.Value.ContainsKey(field) ? $"=HYPERLINK({wiKVP.Value["ParentURL"]};{wiKVP.Value[field]})" : "";
-                                else
-                                    row[field] = wiKVP.Value.ContainsKey(field) ? $"{wiKVP.Value[field]}" : "";
-                            }
-                        }
-                    }
-                    table.Rows.Add(row);
-                }
-            }
 
             var insertedTable = ws.Cell(1, 1).InsertTable(table.AsEnumerable());
 

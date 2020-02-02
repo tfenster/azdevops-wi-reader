@@ -17,10 +17,10 @@ namespace AzDevOpsWiReader.Shared
         private readonly string _pat;
         private readonly string _query;
         private readonly string _linkType;
-        private readonly List<string> _fields;
+        private readonly List<FieldWithLabel> _fields;
         private readonly HttpClient _httpClient;
 
-        public OrgReader(string org, string pat, string query, List<string> fields, string linkType = null)
+        public OrgReader(string org, string pat, string query, List<FieldWithLabel> fields, string linkType = null)
         {
             _org = org;
             _pat = pat;
@@ -144,7 +144,7 @@ namespace AzDevOpsWiReader.Shared
 
         private async Task<Dictionary<long, Dictionary<string, object>>> GetWIDetails(long[] wiIds)
         {
-            var definition = new { ids = wiIds, fields = _fields };
+            var definition = new { ids = wiIds, fields = _fields.Select(f => f.Id) };
             var wibatchContent = new StringContent(JsonConvert.SerializeObject(definition), Encoding.UTF8, "application/json");
             var wibatchResult = await _httpClient.PostAsync($"/{_org}/_apis/wit/workitemsbatch?api-version=5.1", wibatchContent);
             wibatchResult.EnsureSuccessStatusCode();
