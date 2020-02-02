@@ -1,0 +1,99 @@
+﻿@page "/"
+
+@using AzDevOpsWiReader.Web.Data
+@using System.Data
+@using System.Text.RegularExpressions
+@inject AzDevOpsReaderService ReaderService
+
+<h1>Azure DevOps WorkItem list (<a href="" @onclick="(() => LoadData())" @onclick:preventDefault>Reload</a>)</h1>
+<input @bind="filterString" width="200" />&nbsp;<button class="btn btn-primary" @onclick="SetupView">Filter</button>&nbsp;E.g. use "State = 'Active' AND Name = 'Tobias Fenster'".
+
+@if (display == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div style="overflow:auto;">
+        <table class="table">
+            <thead>
+                <tr>
+                    @foreach (DataColumn column in display.Columns)
+                    {
+                        <th><a href="" @onclick="(() => Sort(column.Caption))" @onclick:preventDefault>@column.Caption</a></th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                    @foreach (DataRow row in display.Rows)
+                    {
+                <tr>
+                        @foreach (DataColumn column in display.Columns)
+                        {
+                            <td>@((MarkupString)Format(row[column].ToString()))</td>
+                        }
+                </tr>
+                    }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private DataTable result;
+    private DataTable display;
+    private string sortField;
+    private string sortDirection;
+    private string filterString;
+
+    protected override async Task OnInitializedAsync()
+    {
+        sortField = "ID";
+        sortDirection = "ASC";
+        filterString = "";
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        display = null;
+        result = await Task.Run(ReaderService.GetAzDevOpsResult);
+        SetupView();
+    }
+
+    private string Format(string s) 
+    {
+        var match = Regex.Match(s, @"=HYPERLINK\((.*);(.*)\)");
+        if (match.Success)
+        {
+            return $"<a href=\"{match.Groups[1].Value}\" target=\"_blank\">{match.Groups[2].Value}</a>";
+        } 
+        else
+        {
+            return s;
+        }
+    }
+
+    private void Sort(string column) 
+    {
+        if (sortField != column) 
+        {
+            sortField = column;
+            sortDirection = "ASC";
+        } 
+        else
+        {
+            sortDirection = sortDirection == "ASC" ? "DESC" : "ASC";
+        }
+        SetupView();
+    }
+
+    private void SetupView()
+    {
+        var view = new DataView(result);
+        view.Sort = $"{sortField} {sortDirection}";
+        view.RowFilter = filterString;
+        display = view.ToTable();
+    }
+}
+

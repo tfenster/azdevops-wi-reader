@@ -15,5 +15,78 @@
 	],
 	"settings": {
 		"editor.formatOnSave": true
+	},
+	"tasks": {
+		"tasks": [
+			{
+				"type": "docker-build",
+				"label": "docker-build: debug",
+				"dependsOn": [
+					"build"
+				],
+				"dockerBuild": {
+					"tag": "webapp:dev",
+					"target": "base",
+					"dockerfile": "${workspaceFolder}/Dockerfile",
+					"context": "${workspaceFolder}",
+					"pull": true
+				},
+				"netCore": {
+					"appProject": "${workspaceFolder}/web.csproj"
+				}
+			},
+			{
+				"type": "docker-build",
+				"label": "docker-build: release",
+				"dependsOn": [
+					"build"
+				],
+				"dockerBuild": {
+					"tag": "webapp:latest",
+					"dockerfile": "${workspaceFolder}/Dockerfile",
+					"context": "${workspaceFolder}",
+					"pull": true
+				},
+				"netCore": {
+					"appProject": "${workspaceFolder}/web.csproj"
+				}
+			},
+			{
+				"type": "docker-run",
+				"label": "docker-run: debug",
+				"dependsOn": [
+					"docker-build: debug"
+				],
+				"dockerRun": {},
+				"netCore": {
+					"appProject": "${workspaceFolder}/web.csproj",
+					"enableDebugging": true
+				}
+			},
+			{
+				"type": "docker-run",
+				"label": "docker-run: release",
+				"dependsOn": [
+					"docker-build: release"
+				],
+				"dockerRun": {},
+				"netCore": {
+					"appProject": "${workspaceFolder}/web.csproj"
+				}
+			}
+		]
+	},
+	"launch": {
+		"configurations": [
+			{
+				"name": "Docker .NET Core Launch",
+				"type": "docker",
+				"request": "launch",
+				"preLaunchTask": "docker-run: debug",
+				"netCore": {
+					"appProject": "${workspaceFolder}/web.csproj"
+				}
+			}
+		]
 	}
 }
