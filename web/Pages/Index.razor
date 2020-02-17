@@ -2,11 +2,13 @@
 
 @using AzDevOpsWiReader.Web.Data
 @using System.Data
+@using System.Dynamic
 @using System.Text.RegularExpressions
+@using DevExpress.Blazor
+
 @inject AzDevOpsReaderService ReaderService
 
-<h1>Azure DevOps WorkItem list (<a href="" @onclick="(() => LoadData())" @onclick:preventDefault>Reload</a>)</h1>
-<input @bind="filterString" width="200" />&nbsp;<button class="btn btn-primary" @onclick="SetupView">Filter</button>&nbsp;E.g. use "State = 'Active' AND Name = 'Tobias Fenster'".
+<h1>Azure DevOps WorkItem list (<a href="" @onclick="(() => Reload())" @onclick:preventDefault>Reload</a>)</h1>
 
 @if (display == null)
 {
@@ -14,55 +16,77 @@
 }
 else
 {
-    <div style="overflow:auto;">
-        <table class="table">
-            <thead>
-                <tr>
-                    @foreach (DataColumn column in display.Columns)
-                    {
-                        <th><a href="" @onclick="(() => Sort(column.Caption))" @onclick:preventDefault>@column.Caption</a></th>
-                    }
-                </tr>
-            </thead>
-            <tbody>
-                    @foreach (DataRow row in display.Rows)
-                    {
-                <tr>
-                        @foreach (DataColumn column in display.Columns)
+    <DxDataGrid Data="@display"
+                T="@object"
+                PageSize="20">
+        @foreach (DataColumn col in result.Columns.Cast<DataColumn>().Where(c => c.ColumnName != "URL" && c.ColumnName != "ParentURL")) {
+            <DxDataGridColumn Field="@col.ToString()">
+                <DisplayTemplate>
+                    @{
+                        @*var dict = context as IDictionary<String, Object>;
+                        foreach (var key in dict.Keys)
                         {
-                            <td>@((MarkupString)Format(row[column].ToString()))</td>
+                            <span>@key - @dict[key]</span><br />
+                        }*@
+                        @if (col.ToString() == "Title" || col.ToString() == "Parent")
+                        {
+                            <span>@((MarkupString)Format((context as IDictionary<String, Object>)[col.ToString() + "_Extended"]))</span>
+                        } 
+                        else 
+                        {
+                            <span>@((MarkupString)Format((context as IDictionary<String, Object>)[col.ToString()]))</span>
                         }
-                </tr>
                     }
-            </tbody>
-        </table>
-    </div>
+                </DisplayTemplate>
+            </DxDataGridColumn>
+        }
+    </DxDataGrid>
 }
 
 @code {
     private DataTable result;
-    private DataTable display;
-    private string sortField;
-    private string sortDirection;
-    private string filterString;
+    private List<object> display;
 
     protected override async Task OnInitializedAsync()
     {
-        sortField = "ID";
-        sortDirection = "ASC";
-        filterString = "";
-        await LoadData();
-    }
-
-    private async Task LoadData()
-    {
-        display = null;
         result = await Task.Run(ReaderService.GetAzDevOpsResult);
-        SetupView();
+        display = ConvertDataTableToExpandoObjectList(result);
     }
 
-    private string Format(string s) 
+    private static List<dynamic> ConvertDataTableToExpandoObjectList(DataTable dataTable) {
+        List<dynamic> expandoList = new List<dynamic>();
+        foreach (DataRow row in dataTable.Rows) {
+            var expandoDict = new ExpandoObject() as IDictionary<String, Object>;
+            foreach (DataColumn col in dataTable.Columns) {
+                expandoDict.Add(col.ToString(), row[col.ColumnName]);
+                if (col.ColumnName == "Title")
+                {
+                    if (row["URL"] != DBNull.Value && ! String.IsNullOrEmpty((string) row["URL"]))
+                        expandoDict.Add("Title_Extended", $"=HYPERLINK({row["URL"]};{row["Title"]})");
+                    else
+                        expandoDict.Add("Title_Extended", row["Title"]);
+                }
+                else if (col.ColumnName == "Parent")
+                {
+                    if (row["ParentURL"] != DBNull.Value && ! String.IsNullOrEmpty((string) row["ParentURL"]))
+                        expandoDict.Add("Parent_Extended", $"=HYPERLINK({row["ParentURL"]};{row["Parent"]})");
+                    else
+                        expandoDict.Add("Parent_Extended", row["Parent"]);
+                }
+            }
+            expandoList.Add(expandoDict);
+        }
+
+        return expandoList;
+    }
+
+    public void Reload() {
+
+    }
+
+    private string Format(object o) 
     {
+        var s = o.ToString();
         var match = Regex.Match(s, @"=HYPERLINK\((.*);(.*)\)");
         if (match.Success)
         {
@@ -72,28 +96,6 @@ else
         {
             return s;
         }
-    }
-
-    private void Sort(string column) 
-    {
-        if (sortField != column) 
-        {
-            sortField = column;
-            sortDirection = "ASC";
-        } 
-        else
-        {
-            sortDirection = sortDirection == "ASC" ? "DESC" : "ASC";
-        }
-        SetupView();
-    }
-
-    private void SetupView()
-    {
-        var view = new DataView(result);
-        view.Sort = $"{sortField} {sortDirection}";
-        view.RowFilter = filterString;
-        display = view.ToTable();
     }
 }
 

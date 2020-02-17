@@ -8,4 +8,8 @@
     <ProjectReference Include="..\shared\shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="DevExpress.Blazor" Version="19.2.3" />
+  </ItemGroup>
+
 </Project>

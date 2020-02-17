@@ -43,6 +43,8 @@ namespace AzDevOpsWiReader.Shared
 
             var table = new DataTable();
             table.Columns.Add("ID", System.Type.GetType("System.Int32"));
+            table.Columns.Add("URL", typeof(string));
+            table.Columns.Add("ParentURL", typeof(string));
             foreach (var field in fieldList)
             {
                 table.Columns.Add(field.Label, typeof(string));
@@ -63,19 +65,13 @@ namespace AzDevOpsWiReader.Shared
                         foreach (var field in fieldList)
                         {
                             row[field.Label] = wiKVP.Value.ContainsKey(field.Id) ? wiKVP.Value[field.Id] : "";
-                            if (field.Id == "System.Title")
+                            if (field.Id == "System.Title" && wiKVP.Value.ContainsKey("URL"))
                             {
-                                if (wiKVP.Value.ContainsKey("URL"))
-                                    row[field.Label] = wiKVP.Value.ContainsKey(field.Id) ? $"=HYPERLINK({wiKVP.Value["URL"]};{wiKVP.Value[field.Id]})" : "";
-                                else
-                                    row[field.Label] = wiKVP.Value.ContainsKey(field.Id) ? $"{wiKVP.Value[field.Label]}" : "";
+                                row["URL"] = wiKVP.Value["URL"];
                             }
-                            else if (field.Id == "ParentTitle")
+                            else if (field.Id == "ParentTitle" && wiKVP.Value.ContainsKey("ParentURL"))
                             {
-                                if (wiKVP.Value.ContainsKey("ParentURL"))
-                                    row[field.Label] = wiKVP.Value.ContainsKey(field.Id) ? $"=HYPERLINK({wiKVP.Value["ParentURL"]};{wiKVP.Value[field.Id]})" : "";
-                                else
-                                    row[field.Label] = wiKVP.Value.ContainsKey(field.Id) ? $"{wiKVP.Value[field.Id]}" : "";
+                                row["ParentURL"] = wiKVP.Value["ParentURL"];
                             }
                         }
                     }

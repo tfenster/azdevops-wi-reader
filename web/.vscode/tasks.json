@@ -19,16 +19,8 @@
             "type": "process",
             "args": [
                 "publish",
-                "-r",
-                "win-x64",
-                "-c",
-                "Release",
-                "--self-contained",
-                "true",
                 "${workspaceFolder}/azdevopsreader-web.csproj",
                 "/property:GenerateFullPaths=true",
-                "/property:PublishSingleFile=true",
-                "/property:PublishTrimmed=true",
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
