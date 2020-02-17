@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
 using AzDevOpsWiReader.Shared;
@@ -16,7 +18,7 @@ namespace AzDevOpsWiReader.Web.Data
             _configuration = configuration;
         }
 
-        public DataTable GetAzDevOpsResult()
+        public List<ExpandoObject> GetAzDevOpsResult()
         {
             var c = _configuration.Get<Config>();
             return AzDevOpsReader.ReadWIs(c);

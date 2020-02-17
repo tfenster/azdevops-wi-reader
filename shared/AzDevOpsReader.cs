@@ -5,20 +5,18 @@ using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Dynamic;
 
 namespace AzDevOpsWiReader.Shared
 {
     public class AzDevOpsReader
     {
-        public static DataTable ReadWIs(Config c)
+        public static List<ExpandoObject> ReadWIs(Config c)
         {
             var fieldList = new List<FieldWithLabel>(c.Fields);
             if (!fieldList.Any(f => f.Id == "System.Title"))
             {
                 fieldList.Add(new FieldWithLabel() { Id = "System.Title", Label = "Title" });
-            }
-            else
-            {
             }
 
             var tasks = new List<Task<ConcurrentDictionary<long, Dictionary<string, string>>>>();
@@ -48,12 +46,21 @@ namespace AzDevOpsWiReader.Shared
                 table.Columns.Add(field.Label, typeof(string));
             }
 
+            var expandos = new List<ExpandoObject>();
+            var firstExpando = new ExpandoObject();
+            AddProperty(firstExpando, "ID", "ID");
+            foreach (var field in fieldList)
+            {
+                AddProperty(firstExpando, field.Id, field.Label);
+            }
+            expandos.Add(firstExpando);
+
             foreach (var wiDict in results)
             {
                 foreach (var wiKVP in wiDict)
                 {
-                    var row = table.NewRow();
-                    row["ID"] = wiKVP.Key;
+                    dynamic expando = new ExpandoObject();
+                    AddProperty(expando, "ID", wiKVP.Key);
                     if (wiKVP.Value == null)
                     {
                         Console.WriteLine($"Details for Workitem {wiKVP.Key} are missing");
@@ -62,28 +69,38 @@ namespace AzDevOpsWiReader.Shared
                     {
                         foreach (var field in fieldList)
                         {
-                            row[field.Label] = wiKVP.Value.ContainsKey(field.Id) ? wiKVP.Value[field.Id] : "";
+                            AddProperty(expando, field.Id, wiKVP.Value.ContainsKey(field.Id) ? wiKVP.Value[field.Id] : "");
                             if (field.Id == "System.Title")
                             {
                                 if (wiKVP.Value.ContainsKey("URL"))
-                                    row[field.Label] = wiKVP.Value.ContainsKey(field.Id) ? $"=HYPERLINK({wiKVP.Value["URL"]};{wiKVP.Value[field.Id]})" : "";
+                                    AddProperty(expando, "System.Title_Extended", wiKVP.Value.ContainsKey(field.Id) ? $"=HYPERLINK({wiKVP.Value["URL"]};{wiKVP.Value[field.Id]})" : "");
                                 else
-                                    row[field.Label] = wiKVP.Value.ContainsKey(field.Id) ? $"{wiKVP.Value[field.Label]}" : "";
+                                    AddProperty(expando, "System.Title_Extended", wiKVP.Value.ContainsKey(field.Id) ? wiKVP.Value[field.Id] : "");
                             }
                             else if (field.Id == "ParentTitle")
                             {
                                 if (wiKVP.Value.ContainsKey("ParentURL"))
-                                    row[field.Label] = wiKVP.Value.ContainsKey(field.Id) ? $"=HYPERLINK({wiKVP.Value["ParentURL"]};{wiKVP.Value[field.Id]})" : "";
+                                    AddProperty(expando, "ParentTitle_Extended", wiKVP.Value.ContainsKey(field.Id) ? $"=HYPERLINK({wiKVP.Value["ParentURL"]};{wiKVP.Value[field.Id]})" : "");
                                 else
-                                    row[field.Label] = wiKVP.Value.ContainsKey(field.Id) ? $"{wiKVP.Value[field.Id]}" : "";
+                                    AddProperty(expando, "ParentTitle_Extended", wiKVP.Value.ContainsKey(field.Id) ? wiKVP.Value[field.Id] : "");
                             }
                         }
                     }
-                    table.Rows.Add(row);
+                    expandos.Add(expando);
                 }
             }
 
-            return table;
+            return expandos;
+        }
+
+        public static void AddProperty(ExpandoObject expando, string propertyName, object propertyValue)
+        {
+            propertyName = propertyName.Replace(".", "_");
+            var expandoDict = expando as IDictionary<string, object>;
+            if (expandoDict.ContainsKey(propertyName))
+                expandoDict[propertyName] = propertyValue;
+            else
+                expandoDict.Add(propertyName, propertyValue);
         }
     }
 }

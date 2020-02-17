@@ -1,0 +1,41 @@
+{
+    "orgsWithPATs": [
+        {
+            "pat": "aovepk72aiyqmlnifmlssh4hhfucwtdpozctnq5edfm4ccfyli5q",
+            "orgs": [
+                "CosmoConsultSued-APC"
+            ]
+        },
+        {
+            "pat": "lfs7vxuocnxeokucwbjt6q2ntprcqnzo7uljzpjm5inxc7xmakvq",
+            "orgs": [
+                "cc-demo-devops",
+                "cc-East-Assets"
+            ]
+        }
+    ],
+    "query": "SELECT [System.Id], [System.WorkItemType], [System.Title], [System.AssignedTo], [System.State], [System.Tags] FROM workitemLinks WHERE ([Source].[System.WorkItemType] IN ('User Story', 'Bug') AND [Source].[System.State] IN ('Active', 'Resolved') ) AND ([Target].[System.WorkItemType] = 'Task' AND NOT [Target].[System.State] IN ('Closed') ) ORDER BY [System.Id] MODE (MayContain)",
+    "linkType": "System.LinkTypes.Hierarchy-Forward",
+    "fields": [
+        {
+            "id": "System.WorkItemType",
+            "label": "Type"
+        },
+        {
+            "id": "System.AssignedTo",
+            "label": "AssignedTo"
+        },
+        {
+            "id": "System.State",
+            "label": "State"
+        },
+        {
+            "id": "System.Tags",
+            "label": "Tags"
+        },
+        {
+            "id": "System.TeamProject",
+            "label": "Project"
+        }
+    ]
+}
