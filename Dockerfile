@@ -2,15 +2,16 @@
 #For more information, please see https://aka.ms/containercompat
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-nanoserver-1903 AS build
-WORKDIR /src
-COPY ["web/web.csproj", "./"]
-RUN dotnet restore "./web.csproj"
-COPY ["web/", "./"]
 
 WORKDIR /shared
 COPY ["shared/shared.csproj", "./"]
 RUN dotnet restore "./shared.csproj"
 COPY ["shared/", "./"]
+
+WORKDIR /src
+COPY ["web/web.csproj", "./"]
+RUN dotnet restore "./web.csproj"
+COPY ["web/", "./"]
 
 WORKDIR "/src/."
 RUN dotnet build "web.csproj" -c Release -o /app/build
