@@ -17,9 +17,6 @@ namespace AzDevOpsWiReader.Shared
             {
                 fieldList.Add(new FieldWithLabel() { Id = "System.Title", Label = "Title" });
             }
-            else
-            {
-            }
 
             var tasks = new List<Task<ConcurrentDictionary<long, Dictionary<string, string>>>>();
             foreach (var orgWithPAT in c.OrgsWithPATs)
