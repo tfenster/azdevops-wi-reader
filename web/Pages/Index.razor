@@ -8,7 +8,7 @@
 
 @inject AzDevOpsReaderService ReaderService
 
-<h1>Azure DevOps WorkItem list (<a href="" @onclick="(() => Reload())" @onclick:preventDefault>Reload</a>)</h1>
+<h1>Azure DevOps WorkItem list (<a href="" @onclick="(() => Load())" @onclick:preventDefault>Reload</a>)</h1>
 
 @if (display == null)
 {
@@ -23,11 +23,6 @@ else
             <DxDataGridColumn Field="@col.ToString()">
                 <DisplayTemplate>
                     @{
-                        @*var dict = context as IDictionary<String, Object>;
-                        foreach (var key in dict.Keys)
-                        {
-                            <span>@key - @dict[key]</span><br />
-                        }*@
                         @if (col.ToString() == "Title" || col.ToString() == "Parent")
                         {
                             <span>@((MarkupString)Format((context as IDictionary<String, Object>)[col.ToString() + "_Extended"]))</span>
@@ -49,8 +44,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        result = await Task.Run(ReaderService.GetAzDevOpsResult);
-        display = ConvertDataTableToExpandoObjectList(result);
+        await Load();
     }
 
     private static List<dynamic> ConvertDataTableToExpandoObjectList(DataTable dataTable) {
@@ -80,8 +74,10 @@ else
         return expandoList;
     }
 
-    public void Reload() {
-
+    public async Task Load() {
+        display = null;
+        result = await Task.Run(ReaderService.GetAzDevOpsResult);
+        display = ConvertDataTableToExpandoObjectList(result);
     }
 
     private string Format(object o) 
