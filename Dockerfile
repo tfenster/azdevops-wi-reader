@@ -10,7 +10,9 @@ COPY ["shared/", "./"]
 
 WORKDIR /src
 COPY ["web/web.csproj", "./"]
+COPY ["web/nuget.config", "."]
 RUN dotnet restore "./web.csproj"
+RUN del nuget.config
 COPY ["web/", "./"]
 
 WORKDIR "/src/."
