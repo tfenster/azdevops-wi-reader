@@ -28,5 +28,5 @@ jobs:
       run: $version = ((Invoke-Expression "git describe --abbrev=0 --tags").Substring(1)); Invoke-Expression "docker build -t tobiasfenster/azdevops-wi-reader:$($version)-1809 -f Dockerfile.1809 ."
   
     - name: Push Docker image
-      run: $version = ((Invoke-Expression "git describe --abbrev=0 --tags").Substring(1)); Write-Host "docker push `"tobiasfenster/azdevops-wi-reader:$($version)-1809`""; Invoke-Expression "docker push `"tobiasfenster/azdevops-wi-reader:$($version)-1809`""
+      run: $version = ((Invoke-Expression "git describe --abbrev=0 --tags").Substring(1)); Invoke-Expression "docker push `"tobiasfenster/azdevops-wi-reader:$($version)-1809`""
   
