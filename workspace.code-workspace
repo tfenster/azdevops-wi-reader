@@ -11,6 +11,10 @@
 		{
 			"name": "Web App",
 			"path": "web"
+		},
+		{
+			"name": "GitHub",
+			"path": ".github"
 		}
 	],
 	"settings": {
