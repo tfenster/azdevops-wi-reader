@@ -12,10 +12,10 @@ WORKDIR /src
 COPY ["web/web.csproj", "./"]
 COPY ["web/nuget.config", "."]
 RUN dotnet restore "./web.csproj"
-RUN del nuget.config
 COPY ["web/", "./"]
 
 WORKDIR "/src/."
+USER ContainerAdministrator
 RUN dotnet build "web.csproj" -c Release -o /app/build
 RUN dotnet publish "web.csproj" -c Release -o /app/publish
 
