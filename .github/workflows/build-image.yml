@@ -1,5 +1,10 @@
 name: Build Image
 
+on:
+  push:
+    tags:
+    - 'v*' 
+
 jobs:
 
   build:
@@ -15,4 +20,4 @@ jobs:
         crypt_pwd: ${{ secrets.crypt_pwd }}
 
     - name: Build Docker image
-      run: Invoke-Expression ("docker build tobiasfenster/azdevops-wi-reader:" + $env:GITHUB_RUN_ID + "-1809 -f Dockerfile.1809 web")
+      run: $version = ((Invoke-Expression "git describe --abbrev=0 --tags").Substring(1) + ".0.0"); Invoke-Expression ("docker build tobiasfenster/azdevops-wi-reader:" + $version + "-1809 -f Dockerfile.1809 web")
