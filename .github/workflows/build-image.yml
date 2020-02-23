@@ -18,12 +18,9 @@ jobs:
       run: Invoke-Expression "docker run --rm -v $(pwd)\web:c:\crypt tobiasfenster/rijndaelfileenc:0.1-1809 --action decrypt --password $env:crypt_pwd --file c:\crypt\nuget.config.enc"
       env:
         crypt_pwd: ${{ secrets.crypt_pwd }}
-    
-    - name: Publish to Docker Repository
-      uses: elgohr/Publish-Docker-Github-Action@master
-      with:
-        name: tobiasfenster/azdevops-wi-reader
-        username: ${{ secrets.docker_user }}
-        password: ${{ secrets.docker_pwd }}
-        dockerfile: Dockerfile.1809
-        tags: wtf
+
+    - name: Build and push Docker image
+      run: web\build.ps1
+      env:
+        docker_user: ${{ secrets.docker_user }}
+        docker_pwd: ${{ secrets.docker_pwd }}
