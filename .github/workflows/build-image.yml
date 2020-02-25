@@ -9,13 +9,16 @@ jobs:
 
   build:
 
+    env: 
+      win-ver: 1809
+
     runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v1
       
     - name: Decrypt nuget config
-      run: Invoke-Expression "docker run --rm -v $(pwd)\web:c:\crypt tobiasfenster/rijndaelfileenc:0.1-1809 --action decrypt --password $env:crypt_pwd --file c:\crypt\nuget.config.enc"
+      run: Invoke-Expression "docker run --rm -v $(pwd)\web:c:\crypt tobiasfenster/rijndaelfileenc:0.1-${{ env.win-ver }} --action decrypt --password $env:crypt_pwd --file c:\crypt\nuget.config.enc"
       env:
         crypt_pwd: ${{ secrets.crypt_pwd }}
     
@@ -25,8 +28,8 @@ jobs:
         password: ${{ secrets.docker_pwd }}
 
     - name: Build Docker image
-      run: $version = ((Invoke-Expression "git describe --abbrev=0 --tags").Substring(1)); Invoke-Expression "docker build --build-arg BASE=1809 -t tobiasfenster/azdevops-wi-reader:$($version)-1809 -f Dockerfile ."
+      run: $version = ((Invoke-Expression "git describe --abbrev=0 --tags").Substring(1)); Invoke-Expression "docker build --build-arg BASE=${{ env.win-ver }} -t tobiasfenster/azdevops-wi-reader:$($version)-${{ env.win-ver }} -f Dockerfile ."
   
     - name: Push Docker image
-      run: $version = ((Invoke-Expression "git describe --abbrev=0 --tags").Substring(1)); Invoke-Expression "docker push `"tobiasfenster/azdevops-wi-reader:$($version)-1809`""
+      run: $version = ((Invoke-Expression "git describe --abbrev=0 --tags").Substring(1)); Invoke-Expression "docker push `"tobiasfenster/azdevops-wi-reader:$($version)-${{ env.win-ver }}`""
   
