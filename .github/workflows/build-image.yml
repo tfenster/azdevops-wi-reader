@@ -25,7 +25,7 @@ jobs:
         password: ${{ secrets.docker_pwd }}
 
     - name: Build Docker image
-      run: $version = ((Invoke-Expression "git describe --abbrev=0 --tags").Substring(1)); Invoke-Expression "docker build -t tobiasfenster/azdevops-wi-reader:$($version)-1809 -f Dockerfile.1809 ."
+      run: $version = ((Invoke-Expression "git describe --abbrev=0 --tags").Substring(1)); Invoke-Expression "docker build --build-arg BASE=1809 -t tobiasfenster/azdevops-wi-reader:$($version)-1809 -f Dockerfile ."
   
     - name: Push Docker image
       run: $version = ((Invoke-Expression "git describe --abbrev=0 --tags").Substring(1)); Invoke-Expression "docker push `"tobiasfenster/azdevops-wi-reader:$($version)-1809`""
