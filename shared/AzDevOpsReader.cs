@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,7 +9,7 @@ namespace AzDevOpsWiReader.Shared
 {
     public class AzDevOpsReader
     {
-        public static DataTable ReadWIs(Config c)
+        public static async Task<DataTable> ReadWIs(Config c)
         {
             var fieldList = new List<FieldWithLabel>(c.Fields);
             if (!fieldList.Any(f => f.Id == "System.Title"))
@@ -28,7 +27,7 @@ namespace AzDevOpsWiReader.Shared
                 }
             }
 
-            ConcurrentDictionary<long, Dictionary<string, string>>[] results = Task.WhenAll(tasks).Result;
+            ConcurrentDictionary<long, Dictionary<string, string>>[] results = await Task.WhenAll(tasks);
 
             if (fieldList.Any(f => f.Id == "System.AssignedTo"))
             {
@@ -41,6 +40,7 @@ namespace AzDevOpsWiReader.Shared
             var table = new DataTable();
             table.Columns.Add("ID", System.Type.GetType("System.Int32"));
             table.Columns.Add("URL", typeof(string));
+            table.Columns.Add("Organization", typeof(string));
             table.Columns.Add("ParentURL", typeof(string));
             foreach (var field in fieldList)
             {
@@ -53,6 +53,7 @@ namespace AzDevOpsWiReader.Shared
                 {
                     var row = table.NewRow();
                     row["ID"] = wiKVP.Key;
+                    row["Organization"] = wiKVP.Value["Organization"];
                     if (wiKVP.Value == null)
                     {
                         Console.WriteLine($"Details for Workitem {wiKVP.Key} are missing");
