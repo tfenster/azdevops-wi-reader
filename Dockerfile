@@ -17,7 +17,7 @@ RUN dotnet publish "web.csproj" -c Release -o /app/publish /property:GenerateFul
 
 FROM tobiasfenster/nginx-custom:1.18.0-$BASE AS final
 EXPOSE 80
-WORKDIR C:\nginx
+WORKDIR /nginx
 CMD "C:\nginx\nginx.exe"
 
 COPY --from=build /app/publish/wwwroot/ /nginx/html/
