@@ -25,9 +25,6 @@ namespace web
                 BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
             };
             builder.Services.AddTransient(sp => client);
-            using var response = await client.GetAsync("config.json");
-            using var stream = await response.Content.ReadAsStreamAsync();
-            builder.Configuration.AddJsonStream(stream);
 
             builder.Services.AddBlazoredLocalStorage();
             builder.Services.AddDevExpressBlazor();
