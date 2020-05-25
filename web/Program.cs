@@ -2,36 +2,38 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
-//using AzDevOpsWiReader.Shared;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
+using AzDevOpsWiReader.Web.Data;
+using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration.Json;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace web
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
-        }
+            var builder = WebAssemblyHostBuilder.CreateDefault(args);
+            builder.RootComponents.Add<App>("app");
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration((hostingContext, config) =>
-                {
-                    string basePath = Directory.GetCurrentDirectory();
-                    if (Directory.Exists("c:\\config"))
-                        basePath = "c:\\config";
-                    config.SetBasePath(basePath);
-                    config.AddJsonFile("config.json", optional: false, reloadOnChange: true);
-                })
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
+            var client = new HttpClient()
+            {
+                BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
+            };
+            builder.Services.AddTransient(sp => client);
+            using var response = await client.GetAsync("config.json");
+            using var stream = await response.Content.ReadAsStreamAsync();
+            builder.Configuration.AddJsonStream(stream);
+
+            builder.Services.AddBlazoredLocalStorage();
+            builder.Services.AddDevExpressBlazor();
+            builder.Services.AddSingleton<IAzDevOpsReaderService, AzDevOpsReaderService>();
+
+            await builder.Build().RunAsync();
+        }
     }
 }

@@ -7,19 +7,16 @@ using Microsoft.Extensions.Configuration;
 
 namespace AzDevOpsWiReader.Web.Data
 {
-    public class AzDevOpsReaderService
+    public interface IAzDevOpsReaderService
     {
-        private readonly IConfiguration _configuration;
+        public Task<DataTable> GetAzDevOpsResult(Config config);
+    }
 
-        public AzDevOpsReaderService(IConfiguration configuration)
+    public class AzDevOpsReaderService : IAzDevOpsReaderService
+    {
+        public async Task<DataTable> GetAzDevOpsResult(Config config)
         {
-            _configuration = configuration;
-        }
-
-        public DataTable GetAzDevOpsResult()
-        {
-            var c = _configuration.Get<Config>();
-            return AzDevOpsReader.ReadWIs(c);
+            return await AzDevOpsReader.ReadWIs(config);
         }
     }
 }

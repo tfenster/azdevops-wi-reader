@@ -5,27 +5,28 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Web App launch",
+            "name": ".NET Core Launch (Blazor Standalone)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
-            // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/bin/Debug/netcoreapp3.1/web.dll",
-            "args": [],
+            "program": "dotnet",
+            "args": [
+                "run",
+                "--urls=http://localhost:5001"
+            ],
             "cwd": "${workspaceFolder}",
-            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
-            "console": "internalConsole",
-            "stopAtEntry": false,
-            "serverReadyAction": {
-                "action": "openExternally",
-                "pattern": "^\\s*Now listening on:\\s+(https?://\\S+)"
-            },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
-            },
-            "sourceFileMap": {
-                "/Views": "${workspaceFolder}/Views"
             }
+        },
+        {
+            "name": ".NET Core Debug Blazor Web Assembly in Chrome",
+            "type": "pwa-msedge",
+            "request": "launch",
+            "timeout": 30000,
+            // If you have changed the default port / launch URL make sure to update the expectation below
+            "url": "http://localhost:5001",
+            "webRoot": "${workspaceFolder}",
+            "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}"
         }
     ]
 }

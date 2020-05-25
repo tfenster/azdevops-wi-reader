@@ -144,19 +144,38 @@ namespace AzDevOpsWiReader.Shared
 
         private async Task<Dictionary<long, Dictionary<string, object>>> GetWIDetails(long[] wiIds)
         {
-            var definition = new { ids = wiIds, fields = _fields.Select(f => f.Id) };
+            var definition = new Definition { Ids = wiIds, expand = "Fields" };
             var wibatchContent = new StringContent(JsonConvert.SerializeObject(definition), Encoding.UTF8, "application/json");
             var wibatchResult = await _httpClient.PostAsync($"/{_org}/_apis/wit/workitemsbatch?api-version=5.1", wibatchContent);
             wibatchResult.EnsureSuccessStatusCode();
             var wibatchResultContent = await wibatchResult.Content.ReadAsStringAsync();
             var wibatchResponse = JsonConvert.DeserializeObject<WorkitemsbatchResponse>(wibatchResultContent);
             var dict = new Dictionary<long, Dictionary<string, object>>();
+            var fields = _fields.Select(f => f.Id);
             foreach (var wi in wibatchResponse.Workitems)
             {
-                wi.Fields["URL"] = $"https://dev.azure.com/{_org}/_workitems/edit/{wi.Id}";
-                dict.Add(wi.Id, wi.Fields);
+                var fieldsResult = new Dictionary<string, object>();
+                fieldsResult["URL"] = $"https://dev.azure.com/{_org}/_workitems/edit/{wi.Id}";
+                fieldsResult["Organization"] = $"{_org}";
+                foreach (var field in wi.Fields)
+                {
+                    if (fields.Contains(field.Key))
+                    {
+                        fieldsResult[field.Key] = field.Value;
+                    }
+                }
+                dict.Add(wi.Id, fieldsResult);
+
             }
             return dict;
         }
+    }
+
+    public class Definition
+    {
+        public long[] Ids { get; set; }
+
+        [JsonProperty("$expand")]
+        public string expand { get; set; }
     }
 }
