@@ -13,12 +13,11 @@ RUN dotnet restore "./web.csproj"
 COPY ["web/", "./"]
 
 WORKDIR "/src/."
-USER ContainerAdministrator
-RUN dotnet build "web.csproj" -c Release -o /app/build
-RUN dotnet publish "web.csproj" -c Release -o /app/publish
+RUN dotnet publish "web.csproj" -c Release -o /app/publish /property:GenerateFullPaths=true
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-nanoserver-$BASE AS final
-EXPOSE 80 443
-WORKDIR /app
-COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "web.dll"]
+FROM tobiasfenster/nginx-custom:1.18.0-$BASE AS final
+EXPOSE 80
+WORKDIR C:\nginx
+CMD "C:\nginx\nginx.exe"
+
+COPY --from=build /app/publish/wwwroot/ /nginx/html/
