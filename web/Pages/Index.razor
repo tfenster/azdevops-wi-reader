@@ -59,9 +59,7 @@ else
     Config config = new Config();
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("OnInitializedAsync");
         config = await localStorage.GetItemAsync<Config>("azdevops-wi-reader.config");
-        Console.WriteLine(JsonConvert.SerializeObject(config));
         if (config == null)
             config = new Config();
         await Load();
@@ -69,8 +67,6 @@ else
 
     private async Task HandleSubmit()
     {
-        Console.WriteLine("OnValidSubmit");
-        Console.WriteLine(JsonConvert.SerializeObject(config));
         await localStorage.SetItemAsync("azdevops-wi-reader.config", config);
         PopupVisible = false;
         navigationManager.NavigateTo("/", true);
