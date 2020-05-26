@@ -20,4 +20,4 @@ EXPOSE 80
 WORKDIR /nginx
 CMD "C:\nginx\nginx.exe"
 
-COPY --from=build /app/publish/wwwroot/ /nginx/html/
+COPY --from=build /app/publish/wwwroot/ /nginx/html/wireader/
