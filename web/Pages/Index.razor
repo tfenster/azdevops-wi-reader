@@ -69,7 +69,7 @@ else
     {
         await localStorage.SetItemAsync("azdevops-wi-reader.config", config);
         PopupVisible = false;
-        navigationManager.NavigateTo("/", true);
+        navigationManager.NavigateTo("/wireader/", true);
     }
 
     private static List<dynamic> ConvertDataTableToExpandoObjectList(DataTable dataTable)
