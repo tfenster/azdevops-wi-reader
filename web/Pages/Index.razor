@@ -11,8 +11,9 @@
 @inject IAzDevOpsReaderService ReaderService
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 @inject NavigationManager navigationManager
+@inject IJSRuntime JS
 
-<h1>Azure DevOps WorkItem list (<a href="" @onclick="(() => Load())" @onclick:preventDefault>Reload</a> / <a href="" @onclick="(() => PopupVisible = true)" @onclick:preventDefault>Configure</a>)</h1>
+<h1>Azure DevOps User/WorkItem list (<a href="" @onclick="(() => Load())" @onclick:preventDefault>Reload</a> / <a href="" @onclick="(() => PopupVisible = true)" @onclick:preventDefault>Configure</a> / <a href="" @onclick="(() => Download())" @onclick:preventDefault>Download</a>)</h1>
 
 @if (display == null)
 {
@@ -20,7 +21,7 @@
 }
 else
 {
-    <DxPopup HeaderText="Azure DevOps WorkItem Reader configuration"
+    <DxPopup HeaderText="Azure User/DevOps WorkItem Reader configuration"
             @bind-Visible="@PopupVisible">
         <Content>
             <EditForm Model=@config OnValidSubmit="HandleSubmit">
@@ -53,6 +54,7 @@ else
 }
 
 @code {
+    private Dictionary<string, DataTable> results;
     private DataTable result;
     private List<object> display;
     bool PopupVisible { get; set; } = false;
@@ -107,7 +109,11 @@ else
         display = null;
         if (!string.IsNullOrEmpty(config.Content) && config.Content != Config.DEFAULT)
         {
-            result = await Task.Run(() => ReaderService.GetAzDevOpsResult(config));
+            results = await Task.Run(() => ReaderService.GetAzDevOpsResult(config));
+            if (config.Mode == Mode.WorkItems)
+                result = results["WorkItems"];
+            else
+                result = results["Users"];
             display = ConvertDataTableToExpandoObjectList(result);
         }
         else
@@ -119,6 +125,18 @@ else
             result = new DataTable();
             result.Columns.Add(new DataColumn(" "));
         }
+    }
+
+    public async Task Download()
+    {
+        var workbookBytes = new byte[0];
+        using (var ms = new System.IO.MemoryStream())
+        {
+            var wb = ExcelExport.ConvertToExcel(results);
+            wb.SaveAs(ms);
+            workbookBytes = ms.ToArray();
+        }
+        await JS.SaveAs("AzDevOpsDownload.xlsx", workbookBytes);
     }
 
     private string Format(object o)

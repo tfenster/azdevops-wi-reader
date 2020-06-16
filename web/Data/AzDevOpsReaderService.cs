@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,14 +10,19 @@ namespace AzDevOpsWiReader.Web.Data
 {
     public interface IAzDevOpsReaderService
     {
-        public Task<DataTable> GetAzDevOpsResult(Config config);
+        public Task<Dictionary<string, DataTable>> GetAzDevOpsResult(Config config);
     }
 
     public class AzDevOpsReaderService : IAzDevOpsReaderService
     {
-        public async Task<DataTable> GetAzDevOpsResult(Config config)
+        public async Task<Dictionary<string, DataTable>> GetAzDevOpsResult(Config config)
         {
-            return await AzDevOpsReader.ReadWIs(config);
+            if (config.Mode == Mode.Users)
+                return await AzDevOpsReader.ReadUsers(config);
+            else
+                return new Dictionary<string, DataTable>() {
+                    { "WorkItems", await AzDevOpsReader.ReadWIs(config) }
+                };
         }
     }
 }

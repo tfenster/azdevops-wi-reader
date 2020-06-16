@@ -2,11 +2,14 @@ using Newtonsoft.Json;
 
 namespace AzDevOpsWiReader.Shared
 {
+    public enum Mode { WorkItems, Users }
     public class Config
     {
         public OrgsWithPAT[] OrgsWithPATs { get; set; }
         public string Query { get; set; }
+        public Mode Mode { get; set; }
         public string LinkType { get; set; }
+        public string InternalDomain { get; set; }
         public FieldWithLabel[] Fields { get; set; }
 
         [JsonIgnore]
@@ -27,6 +30,8 @@ namespace AzDevOpsWiReader.Shared
                 this.Query = _config.Query;
                 this.LinkType = _config.LinkType;
                 this.Fields = _config.Fields;
+                this.Mode = _config.Mode;
+                this.InternalDomain = _config.InternalDomain;
             }
         }
 
