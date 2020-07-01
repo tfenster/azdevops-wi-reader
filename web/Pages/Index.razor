@@ -13,7 +13,7 @@
 @inject NavigationManager navigationManager
 @inject IJSRuntime JS
 
-<h1>Azure DevOps User/WorkItem list (<a href="" @onclick="(() => Load())" @onclick:preventDefault>Reload</a> / <a href="" @onclick="(() => PopupVisible = true)" @onclick:preventDefault>Configure</a> / <a href="" @onclick="(() => Download())" @onclick:preventDefault>Download</a>)</h1>
+<h1>Azure DevOps User/WorkItem list (<a href="" @onclick="(() => Load())" @onclick:preventDefault>Reload</a> / <a href="" @onclick="(() => PopupVisible = true)" @onclick:preventDefault>Configure</a> / <a href="" @onclick="(() => Download())" @onclick:preventDefault>Download</a> / <a href="" @onclick="(() => Reset())" @onclick:preventDefault>Reset</a>)</h1>
 
 @if (display == null)
 {
@@ -29,6 +29,7 @@ else
                 <br />
                 <button type="submit">Save and reload</button>
             </EditForm>
+            <a href="" @onclick="(() => config.Content = Config.DEFAULT_WI)" @onclick:preventDefault>Load default config for WorkItem list</a> / <a href="" @onclick="(() => config.Content = Config.DEFAULT_USER)" @onclick:preventDefault>Load default config for User list</a>
         </Content>
     </DxPopup>
     <DxDataGrid Data="@display"
@@ -64,6 +65,12 @@ else
         config = await localStorage.GetItemAsync<Config>("azdevops-wi-reader.config");
         if (config == null)
             config = new Config();
+        await Load();
+    }
+
+    private async Task Reset()
+    {
+        await localStorage.RemoveItemAsync("azdevops-wi-reader.config");
         await Load();
     }
 
@@ -107,7 +114,7 @@ else
     public async Task Load()
     {
         display = null;
-        if (!string.IsNullOrEmpty(config.Content) && config.Content != Config.DEFAULT)
+        if (!string.IsNullOrEmpty(config.Content) && config.Content != Config.DEFAULT_WI && config.Content != Config.DEFAULT_USER)
         {
             results = await Task.Run(() => ReaderService.GetAzDevOpsResult(config));
             if (config.Mode == Mode.WorkItems)

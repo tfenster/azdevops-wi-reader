@@ -18,7 +18,7 @@ namespace AzDevOpsWiReader.Shared
             get
             {
                 if (this.OrgsWithPATs == null || this.OrgsWithPATs.Length == 0)
-                    return Config.DEFAULT;
+                    return Config.DEFAULT_WI;
                 else
                     return JsonConvert.SerializeObject(this, Formatting.Indented);
             }
@@ -35,7 +35,7 @@ namespace AzDevOpsWiReader.Shared
             }
         }
 
-        public const string DEFAULT = @"
+        public const string DEFAULT_WI = @"
 {
   ""OrgsWithPATs"": [
     {
@@ -47,6 +47,7 @@ namespace AzDevOpsWiReader.Shared
     }
   ],
   ""Query"": ""SELECT [System.Id] FROM workitemLinks WHERE ([Source].[System.WorkItemType] IN ('User Story', 'Bug') AND [Source].[System.State] IN ('Active', 'Resolved') ) AND ([Target].[System.WorkItemType] = 'Task' AND NOT [Target].[System.State] IN ('Closed') ) ORDER BY [System.Id] MODE (MayContain)"",
+  ""Mode"": 0,
   ""LinkType"": ""System.LinkTypes.Hierarchy-Forward"",
   ""Fields"": [
     {
@@ -69,7 +70,27 @@ namespace AzDevOpsWiReader.Shared
       ""Id"": ""System.TeamProject"",
       ""Label"": ""Project""
     }
-  ]
+  ],
+  ""InternalDomain"": null
+} 
+";
+
+        public const string DEFAULT_USER = @"
+{
+  ""OrgsWithPATs"": [
+    {
+      ""Pat"": ""<put-your-pat-here>"",
+      ""Orgs"": [
+        ""<org1>"",
+        ""<org2>""
+      ]
+    }
+  ],
+  ""Query"": null,
+  ""Mode"": 1,
+  ""InternalDomain"": ""cosmoconsult.com"",
+  ""LinkType"": null,
+  ""Fields"": null
 } 
 ";
     }
