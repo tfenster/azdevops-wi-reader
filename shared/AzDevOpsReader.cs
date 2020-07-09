@@ -24,16 +24,21 @@ namespace AzDevOpsWiReader.Shared
             }
 
             var tasks = new List<Task<ConcurrentDictionary<long, Dictionary<string, string>>>>();
+            var tasksEntities = new List<Task<KeyValuePair<string, string>>>();
             foreach (var orgWithPAT in c.OrgsWithPATs)
             {
                 foreach (var org in orgWithPAT.Orgs)
                 {
                     var or = new OrgReader(org, orgWithPAT.Pat, c.Query, fieldList, c.LinkType);
                     tasks.Add(or.ReadWIs());
+                    var ur = new UserReader(org, orgWithPAT.Pat);
+                    tasksEntities.Add(ur.ReadEntity());
                 }
             }
 
             ConcurrentDictionary<long, Dictionary<string, string>>[] results = await Task.WhenAll(tasks);
+            KeyValuePair<string, string>[] resultsEntitiesKVP = await Task.WhenAll(tasksEntities);
+            var resultsEntities = resultsEntitiesKVP.ToDictionary(x => x.Key, x => x.Value);
 
             if (fieldList.Any(f => f.Id == "System.AssignedTo"))
             {
@@ -46,6 +51,7 @@ namespace AzDevOpsWiReader.Shared
             var table = new DataTable();
             table.Columns.Add("ID", System.Type.GetType("System.Int32"));
             table.Columns.Add("URL", typeof(string));
+            table.Columns.Add("Entity", typeof(string));
             table.Columns.Add("Organization", typeof(string));
             table.Columns.Add("ParentURL", typeof(string));
             foreach (var field in fieldList)
@@ -60,6 +66,7 @@ namespace AzDevOpsWiReader.Shared
                     var row = table.NewRow();
                     row["ID"] = wiKVP.Key;
                     row["Organization"] = wiKVP.Value["Organization"];
+                    row["Entity"] = resultsEntities[wiKVP.Value["Organization"]];
                     if (wiKVP.Value == null)
                     {
                         Console.WriteLine($"Details for Workitem {wiKVP.Key} are missing");
@@ -153,7 +160,7 @@ namespace AzDevOpsWiReader.Shared
 
             var tableLicenseSummaries = new DataTable();
             var fieldsLicenseSummaries = new string[] {
-                "Organization", "Stakeholders Total", "Stakeholders External", "Basic Total", "Basic External", "Basic Included", "Basic Price", "Test Total", "Test External", "Test Price", "Visual Studio Total", "Visual Studio External", "Price Total"
+                "Entity", "Organization", "Stakeholders Total", "Stakeholders External", "Basic Total", "Basic External", "Basic Included", "Basic Price", "Test Total", "Test External", "Test Price", "Visual Studio Total", "Visual Studio External", "Price Total"
             };
             //var currency = await CurrencyReader.ReadCurrency(); --> see const AzureExchangeEuro
             var pricing = await AzureReader.ReadPricing();
@@ -172,6 +179,7 @@ namespace AzDevOpsWiReader.Shared
                     row[field] = "";
                 }
                 row["Organization"] = ls.Organization;
+                row["Entity"] = resultsEntities[ls.Organization];
 
                 var stakeholderLicense = ls.Licenses.Where(l => l.LicenseName == Stakeholder).FirstOrDefault();
                 if (stakeholderLicense != null)
