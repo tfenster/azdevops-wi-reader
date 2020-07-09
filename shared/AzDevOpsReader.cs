@@ -90,6 +90,7 @@ namespace AzDevOpsWiReader.Shared
         {
             var tasksUsers = new List<Task<ConcurrentDictionary<string, Dictionary<string, string>>>>();
             var tasksLicenseSummaries = new List<Task<LicenseSummary>>();
+            var tasksEntities = new List<Task<KeyValuePair<string, string>>>();
             var internalStakeholdersCount = new Dictionary<string, int>();
             var internalBasicsCount = new Dictionary<string, int>();
             var internalTestsCount = new Dictionary<string, int>();
@@ -101,6 +102,7 @@ namespace AzDevOpsWiReader.Shared
                     var ur = new UserReader(org, orgWithPAT.Pat);
                     tasksUsers.Add(ur.ReadUsers());
                     tasksLicenseSummaries.Add(ur.ReadLicenseSummary());
+                    tasksEntities.Add(ur.ReadEntity());
                     internalStakeholdersCount[org] = 0;
                     internalBasicsCount[org] = 0;
                     internalTestsCount[org] = 0;
@@ -110,10 +112,12 @@ namespace AzDevOpsWiReader.Shared
 
             ConcurrentDictionary<string, Dictionary<string, string>>[] resultsUsers = await Task.WhenAll(tasksUsers);
             LicenseSummary[] resultsLicenseSummaries = await Task.WhenAll(tasksLicenseSummaries);
+            KeyValuePair<string, string>[] resultsEntitiesKVP = await Task.WhenAll(tasksEntities);
+            var resultsEntities = resultsEntitiesKVP.ToDictionary(x => x.Key, x => x.Value);
 
             var tableUsers = new DataTable();
             var fieldsUsers = new string[] {
-                "Organization", "Display Name", "Mail Address", "Subject Kind", "License Type", "License Status", "Last Accessed"
+                "Entity", "Organization", "Display Name", "Mail Address", "Subject Kind", "License Type", "License Status", "Last Accessed"
             };
             foreach (var field in fieldsUsers)
             {
@@ -125,10 +129,11 @@ namespace AzDevOpsWiReader.Shared
                 foreach (var userKVP in userDict)
                 {
                     var row = tableUsers.NewRow();
-                    foreach (var field in fieldsUsers)
+                    foreach (var field in fieldsUsers.Where(f => f.CompareTo("Entity") != 0))
                     {
                         row[field] = userKVP.Value[field];
                     }
+                    row["Entity"] = resultsEntities[userKVP.Value["Organization"]];
                     if (!string.IsNullOrEmpty(userKVP.Value["Mail Address"]) && !string.IsNullOrEmpty(userKVP.Value["License Type"]) && userKVP.Value["Mail Address"].EndsWith(c.InternalDomain))
                     {
                         if (userKVP.Value["License Type"] == Stakeholder)
