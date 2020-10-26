@@ -19,6 +19,10 @@ namespace AzDevOpsWiReader.Web.Data
         {
             if (config.Mode == Mode.Users)
                 return await AzDevOpsReader.ReadUsers(config);
+            else if (config.Mode == Mode.History)
+                return new Dictionary<string, DataTable>() {
+                    { "History", await AzDevOpsReader.ReadHistory(config) }
+                };
             else
                 return new Dictionary<string, DataTable>() {
                     { "WorkItems", await AzDevOpsReader.ReadWIs(config) }

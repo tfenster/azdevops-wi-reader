@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace AzDevOpsWiReader.Shared
 {
-    public enum Mode { WorkItems, Users }
+    public enum Mode { WorkItems, Users, History }
     public class Config
     {
         public OrgsWithPAT[] OrgsWithPATs { get; set; }
@@ -91,6 +91,26 @@ namespace AzDevOpsWiReader.Shared
   ""InternalDomain"": ""cosmoconsult.com"",
   ""LinkType"": null,
   ""Fields"": null
+} 
+";
+
+
+        public const string DEFAULT_HISTORY = @"
+{
+  ""OrgsWithPATs"": [
+    {
+      ""Pat"": ""<put-your-pat-here>"",
+      ""Orgs"": [
+        ""<org1>"",
+        ""<org2>""
+      ]
+    }
+  ],
+  ""Query"": ""SELECT [System.Id] FROM workitemLinks WHERE (([Source].[System.WorkItemType] = 'User Story' OR [Source].[System.WorkItemType] = 'Bug')) AND ( [System.Links.LinkType] = 'System.LinkTypes.Hierarchy-Forward' ) AND ([Target].[System.WorkItemType] = 'Task'  AND [Target].[System.ChangedDate] > @startOfDay('-14d') ) ORDER BY [System.ChangedDate] DESC MODE (MustContain)"",
+  ""Mode"": 2,
+  ""LinkType"": ""System.LinkTypes.Hierarchy-Forward"",
+  ""Fields"": [],
+  ""InternalDomain"": null
 } 
 ";
     }

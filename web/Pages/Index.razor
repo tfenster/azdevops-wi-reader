@@ -13,7 +13,10 @@
 @inject NavigationManager navigationManager
 @inject IJSRuntime JS
 
-<h1>Azure DevOps User/WorkItem list (<a href="" @onclick="(() => Load())" @onclick:preventDefault>Reload</a> / <a href="" @onclick="(() => PopupVisible = true)" @onclick:preventDefault>Configure</a> / <a href="" @onclick="(() => Download())" @onclick:preventDefault>Download</a> / <a href="" @onclick="(() => Reset())" @onclick:preventDefault>Reset</a>)</h1>
+<h1>Azure DevOps User/WorkItem list (<a href="" @onclick="(() => Load())" @onclick:preventDefault>Reload</a> / <a
+    href="" @onclick="(() => PopupVisible = true)" @onclick:preventDefault>Configure</a> / <a href=""
+    @onclick="(() => Download())" @onclick:preventDefault>Download</a> / <a href="" @onclick="(() => Reset())"
+    @onclick:preventDefault>Reset</a>)</h1>
 
 @if (display == null)
 {
@@ -21,29 +24,32 @@
 }
 else
 {
-    <DxPopup HeaderText="Azure User/DevOps WorkItem Reader configuration"
-            @bind-Visible="@PopupVisible">
+    <DxPopup HeaderText="Azure User/DevOps WorkItem Reader configuration" @bind-Visible="@PopupVisible">
         <Content>
             <EditForm Model=@config OnValidSubmit="HandleSubmit">
                 <InputTextArea @bind-Value="config.Content" rows="20" cols="100" />
                 <br />
                 <button type="submit">Save and reload</button>
             </EditForm>
-            <a href="" @onclick="(() => config.Content = Config.DEFAULT_WI)" @onclick:preventDefault>Load default config for WorkItem list</a> / <a href="" @onclick="(() => config.Content = Config.DEFAULT_USER)" @onclick:preventDefault>Load default config for User list</a>
+            <a href="" @onclick="(() => config.Content = Config.DEFAULT_WI)" @onclick:preventDefault>Load default config for
+                WorkItem list</a> / <a href="" @onclick="(() => config.Content = Config.DEFAULT_USER)"
+            @onclick:preventDefault>Load default config for User list</a> / <a href=""
+            @onclick="(() => config.Content = Config.DEFAULT_HISTORY)" @onclick:preventDefault>Load default config for
+                Time change history</a>
         </Content>
     </DxPopup>
-    <DxDataGrid Data="@display"
-                T="@object"
-                PageSize="20">
-        @foreach (DataColumn col in result.Columns.Cast<DataColumn>().Where(c => c.ColumnName != "URL" && c.ColumnName != "ParentURL")) {
+    <DxDataGrid Data="@display" T="@object" PageSize="20">
+        @foreach (DataColumn col in result.Columns.Cast<DataColumn>().Where(c => c.ColumnName != "URL" && c.ColumnName !=
+    "ParentURL"))
+        {
             <DxDataGridColumn Field="@col.ToString()">
                 <DisplayTemplate>
                     @{
                         @if (col.ToString() == "Title" || col.ToString() == "Parent")
                         {
                             <span>@((MarkupString)Format((context as IDictionary<String, Object>)[col.ToString() + "_Extended"]))</span>
-                        } 
-                        else 
+                        }
+                        else
                         {
                             <span>@((MarkupString)Format((context as IDictionary<String, Object>)[col.ToString()]))</span>
                         }
@@ -114,11 +120,14 @@ else
     public async Task Load()
     {
         display = null;
-        if (!string.IsNullOrEmpty(config.Content) && config.Content != Config.DEFAULT_WI && config.Content != Config.DEFAULT_USER)
+        if (!string.IsNullOrEmpty(config.Content) && config.Content != Config.DEFAULT_WI && config.Content !=
+            Config.DEFAULT_USER)
         {
             results = await Task.Run(() => ReaderService.GetAzDevOpsResult(config));
             if (config.Mode == Mode.WorkItems)
                 result = results["WorkItems"];
+            else if (config.Mode == Mode.History)
+                result = results["History"];
             else
                 result = results["Users"];
             display = ConvertDataTableToExpandoObjectList(result);
@@ -160,4 +169,3 @@ else
         }
     }
 }
-

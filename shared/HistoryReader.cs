@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 
 namespace AzDevOpsWiReader.Shared
 {
-    public class OrgReader
+    public class HistoryReader
     {
         private readonly string _org;
         private readonly string _pat;
@@ -20,7 +20,7 @@ namespace AzDevOpsWiReader.Shared
         private readonly List<FieldWithLabel> _fields;
         private readonly HttpClient _httpClient;
 
-        public OrgReader(string org, string pat, string query, List<FieldWithLabel> fields, string linkType = null)
+        public HistoryReader(string org, string pat, string query, List<FieldWithLabel> fields, string linkType = null)
         {
             _org = org;
             _pat = pat;
@@ -32,38 +32,6 @@ namespace AzDevOpsWiReader.Shared
             _httpClient.DefaultRequestHeaders.Clear();
             var authByteArray = Encoding.ASCII.GetBytes($"username:{_pat}");
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(authByteArray));
-        }
-
-        public async Task<ConcurrentDictionary<Guid, Dictionary<string, string>>> ReadWIsWithTimeChange()
-        {
-            var dict = await ReadWIs();
-            var retDict = new ConcurrentDictionary<Guid, Dictionary<string, string>>();
-            var userMail = "";
-            using (var httpClient = new HttpClient())
-            {
-                httpClient.DefaultRequestHeaders.Clear();
-                var authByteArray = Encoding.ASCII.GetBytes($"username:{_pat}");
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(authByteArray));
-                var response = await httpClient.GetAsync("https://app.vsaex.visualstudio.com/_apis/User/User");
-                response.EnsureSuccessStatusCode();
-                var responseBody = await response.Content.ReadAsStringAsync();
-                var user = JsonConvert.DeserializeObject<AuthedUserResponse>(responseBody);
-                userMail = user.Mail;
-            }
-
-            foreach (var wiId in dict.Keys)
-            {
-                var currDict = dict[wiId];
-                var time = await GetCompletedWorkChanges(currDict["System.TeamProject"], wiId, userMail);
-                foreach (var timeKey in time.Keys)
-                {
-                    var newDict = new Dictionary<string, string>(currDict);
-                    newDict.Add("TimeChangedAt", timeKey);
-                    newDict.Add("TimeChange", time[timeKey].ToString());
-                    retDict[Guid.NewGuid()] = newDict;
-                }
-            }
-            return retDict;
         }
 
         public async Task<ConcurrentDictionary<long, Dictionary<string, string>>> ReadWIs()
@@ -153,7 +121,6 @@ namespace AzDevOpsWiReader.Shared
                         {
                             fieldDict[kvp.Key] = kvp.Value.ToString();
                         }
-                        fieldDict["ID"] = wiDict.Key.ToString();
                     }
                     allIDs[wiDict.Key] = fieldDict;
                 }
@@ -202,46 +169,5 @@ namespace AzDevOpsWiReader.Shared
             }
             return dict;
         }
-
-        private async Task<Dictionary<string, float>> GetCompletedWorkChanges(string project, long wiId, string relevantRevisedByUniqueName)
-        {
-            try
-            {
-                var wiupdateResult = await _httpClient.GetAsync($"/{_org}/{project}/_apis/wit/workItems/{wiId}/updates?api-version=6.0");
-                wiupdateResult.EnsureSuccessStatusCode();
-                var wiupdateResultContent = await wiupdateResult.Content.ReadAsStringAsync();
-                var wiupdateResponse = JsonConvert.DeserializeObject<WorkitemsUpdateResponse>(wiupdateResultContent);
-                var relevantChanges = wiupdateResponse.WorkitemsUpdates.Where(u => u.Fields != null && u.Fields.ContainsKey("Microsoft.VSTS.Scheduling.CompletedWork")).Where(v => v.RevisedBy != null && v.RevisedBy.UniqueName == relevantRevisedByUniqueName);
-                var completedWorkChanges = new Dictionary<string, float>();
-                if (relevantChanges != null)
-                {
-                    foreach (var relevantChange in relevantChanges)
-                    {
-                        float origVal = 0f;
-                        float newVal = 0f;
-                        var completedWorkChange = relevantChange.Fields["Microsoft.VSTS.Scheduling.CompletedWork"];
-                        if (completedWorkChange.OldValue != null)
-                            float.TryParse(completedWorkChange.OldValue.ToString(), out origVal);
-                        if (completedWorkChange.NewValue != null)
-                            float.TryParse(completedWorkChange.NewValue.ToString(), out newVal);
-                        completedWorkChanges.Add(DateTime.Parse(relevantChange.Fields["System.ChangedDate"].NewValue.ToString()).ToString("yyyy-MM-dd HH:mm:ss"), newVal - origVal);
-                    }
-                }
-                return completedWorkChanges;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"happened here: {ex.Message}");
-                return null;
-            }
-        }
-    }
-
-    public class Definition
-    {
-        public long[] Ids { get; set; }
-
-        [JsonProperty("$expand")]
-        public string expand { get; set; }
     }
 }

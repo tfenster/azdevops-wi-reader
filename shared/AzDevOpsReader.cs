@@ -229,5 +229,70 @@ namespace AzDevOpsWiReader.Shared
             tables.Add("License Info", tableLicenseSummaries);
             return tables;
         }
+
+        public static async Task<DataTable> ReadHistory(Config c)
+        {
+            var tasks = new List<Task<ConcurrentDictionary<Guid, Dictionary<string, string>>>>();
+            var fieldList = new List<FieldWithLabel>();
+            fieldList.Add(new FieldWithLabel() { Id = "System.TeamProject", Label = "Project" });
+            fieldList.Add(new FieldWithLabel() { Id = "System.Title", Label = "Title" });
+            fieldList.Add(new FieldWithLabel() { Id = "ParentTitle", Label = "Parent" });
+            fieldList.Add(new FieldWithLabel() { Id = "TimeChangedAt", Label = "Time changed At" });
+            fieldList.Add(new FieldWithLabel() { Id = "TimeChange", Label = "Time change" });
+            var table = new DataTable();
+            //table.Columns.Add("ID", typeof(Guid));
+            table.Columns.Add("URL", typeof(string));
+            table.Columns.Add("ParentURL", typeof(string));
+            table.Columns.Add("Organization", typeof(string));
+            //table.Columns.Add("Time changed At", typeof(string));
+            //table.Columns.Add("Time change", typeof(float));
+            foreach (var field in fieldList)
+            {
+                table.Columns.Add(field.Label, typeof(string));
+            }
+
+            foreach (var orgWithPAT in c.OrgsWithPATs)
+            {
+                foreach (var org in orgWithPAT.Orgs)
+                {
+                    var or = new OrgReader(org, orgWithPAT.Pat, c.Query, fieldList, c.LinkType);
+                    tasks.Add(or.ReadWIsWithTimeChange());
+                }
+            }
+
+            ConcurrentDictionary<Guid, Dictionary<string, string>>[] results = await Task.WhenAll(tasks);
+            foreach (var wiDict in results)
+            {
+                foreach (var wiKVP in wiDict)
+                {
+                    var row = table.NewRow();
+                    //row["ID"] = wiKVP.Key;
+                    row["Organization"] = wiKVP.Value["Organization"];
+                    if (wiKVP.Value == null)
+                    {
+                        Console.WriteLine($"Details for Workitem {wiKVP.Key} are missing");
+                    }
+                    else
+                    {
+                        foreach (var field in fieldList)
+                        {
+                            row[field.Label] = wiKVP.Value.ContainsKey(field.Id) ? wiKVP.Value[field.Id] : "";
+                            if (field.Id == "System.Title" && wiKVP.Value.ContainsKey("URL"))
+                            {
+                                row["URL"] = wiKVP.Value["URL"];
+                            }
+                            else if (field.Id == "ParentTitle" && wiKVP.Value.ContainsKey("ParentURL"))
+                            {
+                                row["ParentURL"] = wiKVP.Value["ParentURL"];
+                            }
+                        }
+                    }
+                    table.Rows.Add(row);
+                }
+            }
+
+            table.DefaultView.Sort = "Time changed At desc";
+            return table.DefaultView.ToTable();
+        }
     }
 }
