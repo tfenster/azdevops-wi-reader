@@ -36,7 +36,7 @@ namespace AzDevOpsWiReader.Shared
 
         public async Task<ConcurrentDictionary<Guid, Dictionary<string, string>>> ReadWIsWithTimeChange()
         {
-            var dict = await ReadWIs();
+            var dict = await ReadWIs(true);
             var retDict = new ConcurrentDictionary<Guid, Dictionary<string, string>>();
             var userMail = "";
             using (var httpClient = new HttpClient())
@@ -66,7 +66,7 @@ namespace AzDevOpsWiReader.Shared
             return retDict;
         }
 
-        public async Task<ConcurrentDictionary<long, Dictionary<string, string>>> ReadWIs()
+        public async Task<ConcurrentDictionary<long, Dictionary<string, string>>> ReadWIs(bool readTree = false)
         {
             Console.WriteLine($"Reading WIs for org {_org}");
             var allIDs = new ConcurrentDictionary<long, Dictionary<string, string>>();
@@ -167,9 +167,17 @@ namespace AzDevOpsWiReader.Shared
                     {
                         allIDs[childId.Key]["ParentTitle"] = allIDs[parentId.Value]["System.Title"];
                         allIDs[childId.Key]["ParentURL"] = $"https://dev.azure.com/{_org}/_workitems/edit/{parentId.Value}";
+                        if (readTree && childParentIDs[parentId.Value].HasValue)
+                        {
+                            allIDs[childId.Key]["ParentParentTitle"] = allIDs[childParentIDs[parentId.Value].Value]["System.Title"];
+                            allIDs[childId.Key]["ParentParentURL"] = $"https://dev.azure.com/{_org}/_workitems/edit/{childParentIDs[parentId.Value].Value}";
+                        }
                     }
-                    Dictionary<string, string> outDict;
-                    allIDs.Remove(parentId.Value, out outDict);
+                    if (!readTree)
+                    {
+                        Dictionary<string, string> outDict;
+                        allIDs.Remove(parentId.Value, out outDict);
+                    }
                 }
             }
             return allIDs;

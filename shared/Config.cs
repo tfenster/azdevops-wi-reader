@@ -106,7 +106,7 @@ namespace AzDevOpsWiReader.Shared
       ]
     }
   ],
-  ""Query"": ""SELECT [System.Id] FROM workitemLinks WHERE (([Source].[System.WorkItemType] = 'User Story' OR [Source].[System.WorkItemType] = 'Bug')) AND ( [System.Links.LinkType] = 'System.LinkTypes.Hierarchy-Forward' ) AND ([Target].[System.WorkItemType] = 'Task'  AND [Target].[System.ChangedDate] > @startOfDay('-14d') ) ORDER BY [System.ChangedDate] DESC MODE (MustContain)"",
+  ""Query"": ""SELECT [System.Id] FROM workitemLinks WHERE ([Source].[System.WorkItemType] IN ('Feature', 'User Story')) AND ([System.Links.LinkType] = 'System.LinkTypes.Hierarchy-Forward') AND ([Target].[System.WorkItemType] = 'Task' AND [Target].[System.ChangedDate] > @startOfDay('-14d')) ORDER BY [System.ChangedDate] DESC MODE (Recursive, ReturnMatchingChildren)"",
   ""Mode"": 2,
   ""LinkType"": ""System.LinkTypes.Hierarchy-Forward"",
   ""Fields"": [],

@@ -235,17 +235,16 @@ namespace AzDevOpsWiReader.Shared
             var tasks = new List<Task<ConcurrentDictionary<Guid, Dictionary<string, string>>>>();
             var fieldList = new List<FieldWithLabel>();
             fieldList.Add(new FieldWithLabel() { Id = "System.TeamProject", Label = "Project" });
-            fieldList.Add(new FieldWithLabel() { Id = "System.Title", Label = "Title" });
-            fieldList.Add(new FieldWithLabel() { Id = "ParentTitle", Label = "Parent" });
-            fieldList.Add(new FieldWithLabel() { Id = "TimeChangedAt", Label = "Time changed At" });
-            fieldList.Add(new FieldWithLabel() { Id = "TimeChange", Label = "Time change" });
+            fieldList.Add(new FieldWithLabel() { Id = "ParentParentTitle", Label = "Feature" });
+            fieldList.Add(new FieldWithLabel() { Id = "ParentTitle", Label = "User Story" });
+            fieldList.Add(new FieldWithLabel() { Id = "System.Title", Label = "Task" });
+            fieldList.Add(new FieldWithLabel() { Id = "TimeChangedAt", Label = "Change happened at" });
+            fieldList.Add(new FieldWithLabel() { Id = "TimeChange", Label = "'Completed Work' increased by" });
             var table = new DataTable();
-            //table.Columns.Add("ID", typeof(Guid));
             table.Columns.Add("URL", typeof(string));
             table.Columns.Add("ParentURL", typeof(string));
+            table.Columns.Add("ParentParentURL", typeof(string));
             table.Columns.Add("Organization", typeof(string));
-            //table.Columns.Add("Time changed At", typeof(string));
-            //table.Columns.Add("Time change", typeof(float));
             foreach (var field in fieldList)
             {
                 table.Columns.Add(field.Label, typeof(string));
@@ -285,13 +284,17 @@ namespace AzDevOpsWiReader.Shared
                             {
                                 row["ParentURL"] = wiKVP.Value["ParentURL"];
                             }
+                            else if (field.Id == "ParentParentTitle" && wiKVP.Value.ContainsKey("ParentParentURL"))
+                            {
+                                row["ParentParentURL"] = wiKVP.Value["ParentParentURL"];
+                            }
                         }
                     }
                     table.Rows.Add(row);
                 }
             }
 
-            table.DefaultView.Sort = "Time changed At desc";
+            table.DefaultView.Sort = "Change happened at desc";
             return table.DefaultView.ToTable();
         }
     }

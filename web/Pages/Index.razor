@@ -40,12 +40,13 @@ else
     </DxPopup>
     <DxDataGrid Data="@display" T="@object" PageSize="20">
         @foreach (DataColumn col in result.Columns.Cast<DataColumn>().Where(c => c.ColumnName != "URL" && c.ColumnName !=
-    "ParentURL"))
+    "ParentURL" && c.ColumnName != "ParentParentURL"))
         {
             <DxDataGridColumn Field="@col.ToString()">
                 <DisplayTemplate>
                     @{
-                        @if (col.ToString() == "Title" || col.ToString() == "Parent")
+                        @if (col.ToString() == "Title" || col.ToString() == "Parent" || col.ToString() == "Task" || col.ToString()
+                            == "User Story" || col.ToString() == "Feature")
                         {
                             <span>@((MarkupString)Format((context as IDictionary<String, Object>)[col.ToString() + "_Extended"]))</span>
                         }
@@ -87,7 +88,9 @@ else
         navigationManager.NavigateTo("/wireader/", true);
     }
 
-    private static List<dynamic> ConvertDataTableToExpandoObjectList(DataTable dataTable)
+    private static List<dynamic> ConvertDataTableToExpandoObjectList(DataTable dataTable, string titleColumnName = "Title",
+        string titleUrlColumnName = "URL", string parentColumnName = "Parent", string parentUrlColumnName = "ParentURL", string
+        grandParentColumnName = "ParentParentTitle", string grandParentUrlColumnName = "ParentParentURL")
     {
         List<dynamic> expandoList = new List<dynamic>();
         foreach (DataRow row in dataTable.Rows)
@@ -96,19 +99,28 @@ else
             foreach (DataColumn col in dataTable.Columns)
             {
                 expandoDict.Add(col.ToString(), row[col.ColumnName]);
-                if (col.ColumnName == "Title")
+                Console.WriteLine($"check {col.ColumnName}");
+                if (col.ColumnName == titleColumnName)
                 {
-                    if (row["URL"] != DBNull.Value && !String.IsNullOrEmpty((string)row["URL"]))
-                        expandoDict.Add("Title_Extended", $"=HYPERLINK({row["URL"]};{row["Title"]})");
+                    if (row[titleUrlColumnName] != DBNull.Value && !String.IsNullOrEmpty((string)row[titleUrlColumnName]))
+                        expandoDict.Add($"{titleColumnName}_Extended", $"=HYPERLINK({row[titleUrlColumnName]};{row[titleColumnName]})");
                     else
-                        expandoDict.Add("Title_Extended", row["Title"]);
+                        expandoDict.Add($"{titleColumnName}_Extended", row[titleColumnName]);
                 }
-                else if (col.ColumnName == "Parent")
+                else if (col.ColumnName == parentColumnName)
                 {
-                    if (row["ParentURL"] != DBNull.Value && !String.IsNullOrEmpty((string)row["ParentURL"]))
-                        expandoDict.Add("Parent_Extended", $"=HYPERLINK({row["ParentURL"]};{row["Parent"]})");
+                    if (row[parentUrlColumnName] != DBNull.Value && !String.IsNullOrEmpty((string)row[parentUrlColumnName]))
+                        expandoDict.Add($"{parentColumnName}_Extended", $"=HYPERLINK({row[parentUrlColumnName]};{row[parentColumnName]})");
                     else
-                        expandoDict.Add("Parent_Extended", row["Parent"]);
+                        expandoDict.Add($"{parentColumnName}_Extended", row[parentColumnName]);
+                }
+                else if (col.ColumnName == grandParentColumnName)
+                {
+                    if (row[grandParentUrlColumnName] != DBNull.Value && !String.IsNullOrEmpty((string)row[grandParentUrlColumnName]))
+                        expandoDict.Add($"{grandParentColumnName}_Extended",
+                            $"=HYPERLINK({row[grandParentUrlColumnName]};{row[grandParentColumnName]})");
+                    else
+                        expandoDict.Add($"{grandParentColumnName}_Extended", row[grandParentColumnName]);
                 }
             }
             expandoList.Add(expandoDict);
@@ -130,7 +142,12 @@ else
                 result = results["History"];
             else
                 result = results["Users"];
-            display = ConvertDataTableToExpandoObjectList(result);
+
+            if (config.Mode == Mode.History)
+                display = ConvertDataTableToExpandoObjectList(result, "Task", "URL", "User Story", "ParentURL", "Feature",
+                    "ParentParentURL");
+            else
+                display = ConvertDataTableToExpandoObjectList(result);
         }
         else
         {
