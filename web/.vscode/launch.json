@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch (Blazor Standalone)",
+            "name": "Blazor app start",
             "type": "coreclr",
             "request": "launch",
             "program": "dotnet",
@@ -20,12 +20,12 @@
             }
         },
         {
-            "name": ".NET Core Debug Blazor Web Assembly in Chrome",
-            "type": "chrome",
+            "name": "Edge debug",
+            "type": "pwa-msedge",
             "request": "launch",
             "timeout": 30000,
             // If you have changed the default port / launch URL make sure to update the expectation below
-            "url": "http://localhost:5001/",
+            "url": "http://localhost:5001/wireader",
             "webRoot": "${workspaceFolder}",
             "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}"
         }
